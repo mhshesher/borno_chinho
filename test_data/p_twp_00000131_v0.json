@@ -1,0 +1,270 @@
+[
+    {
+        "bbox": [
+            1009,
+            59,
+            1642,
+            227
+        ],
+        "category": "Text",
+        "text": "গণপ্রজাতন্ত্রী বাংলাদেশ সরকার\nসিভিল সার্জনের কার্য্যালয়\nখাগড়াছড়ি পার্বত্য জেলা ।",
+        "font_size": "11",
+        "font_style": [
+            "normal"
+        ],
+        "page_alignment": "center",
+        "alignment": "center"
+    },
+    {
+        "bbox": [
+            394,
+            222,
+            1162,
+            522
+        ],
+        "category": "Text",
+        "text": "স্বারক নং- সি, এস/খাগড়াছড়ি/৮৭/\nবরাবরে,\nস্বাস্থ্য উপ-পরিচালক,\nচট্টগ্রাম বিভাগ,\nচট্টগ্রাম।",
+        "font_size": "11",
+        "font_style": [
+            "normal"
+        ],
+        "page_alignment": "left",
+        "alignment": "left"
+    },
+    {
+        "bbox": [
+            1780,
+            239,
+            2380,
+            347
+        ],
+        "category": "Table",
+        "text": "<table><tr><td rowspan=\"2\" style=\"font-size: 11px; font-weight: normal; font-style: normal; text-decoration: none; text-align: right;\">তারিখঃ</td><td style=\"font-size: 11px; font-weight: normal; font-style: normal; text-decoration: none; text-align: right;\">/৮৭ ইং</td></tr><tr><td style=\"font-size: 11px; font-weight: normal; font-style: normal; text-decoration: none; text-align: right;\">/৯৪ বাং</td></tr></table>",
+        "page_alignment": "right",
+        "alignment": "right"
+    },
+    {
+        "bbox": [
+            798,
+            553,
+            2272,
+            682
+        ],
+        "category": "Text",
+        "text": "বিষয়ঃ- উপজেলা স্বাস্থ্য ও পরিবার পরিকল্পনার কর্মকর্তা হিসাবে ডবল\nপোষ্টিং দেওয়া প্রসংগে।",
+        "font_size": "11",
+        "font_style": [
+            "normal"
+        ],
+        "page_alignment": "center",
+        "alignment": "left"
+    },
+    {
+        "bbox": [
+            374,
+            807,
+            2386,
+            1121
+        ],
+        "category": "Text",
+        "text": "আপনার সদয় অবগতির জন্য জানানো যাইতেছে যে, ডাঃ মোঃ লুৎফর রহমান, মেডিকেল\nঅফিসার জেলা হাসপাতাল পটুয়াখালিকে মহা পরিচালক স্বাস্থ্য অধিদপ্তর ঢাকা স্বারক নং ১৫৭১৬\nতাং- ১৩-৫-৮৭ ইং মুলে রামগড় উপজেলা স্বাস্থ্য প্রকল্পে উপজেলা স্বাস্থ্য ও পরিবার পরিকল্পনা\nকর্মকর্তা হিসাবে বদলী করা হয়। কিন্তু তিনি অদ্যাবধি কাজে যোগদান করেন নাই।",
+        "font_size": "11",
+        "font_style": [
+            "normal"
+        ],
+        "page_alignment": "justify",
+        "alignment": "justify"
+    },
+    {
+        "bbox": [
+            369,
+            1129,
+            2343,
+            1438
+        ],
+        "category": "Text",
+        "text": "পরবর্তি তে ডাঃ অসিত বরন দে, উপজেলা স্বাস্থ্য ও পরিবার পরিকল্পনা কর্মকর্তা\nচিতলমারী জেলা বাগের হাটকে মহা-পরিচালক স্বাস্থ্য অধিদপ্তর ঢাকা এর স্বারক নং- ২৬৫৭০\nতাং-২১-৭-৮৭ ইং মুলে রামগড় স্বাস্থ্য প্রকল্পে উপজেলা স্বাস্থ্য ও পরিবার পরিকল্পনা কর্মকর্তা\nহিসাবে বদলী করা হইয়াছে। তিনি এখনও কাজে যোগদান করেন নাই।",
+        "font_size": "11",
+        "font_style": [
+            "normal"
+        ],
+        "page_alignment": "justify",
+        "alignment": "justify"
+    },
+    {
+        "bbox": [
+            365,
+            1455,
+            2271,
+            1586
+        ],
+        "category": "Text",
+        "text": "অতএব উল্লেখিত বিষয়ে প্রয়োজনীয় ব্যবস্থা গ্রহণ করার জন্য আপনাকে অনুরোধ করা\nগেল।",
+        "font_size": "11",
+        "font_style": [
+            "normal"
+        ],
+        "page_alignment": "justify",
+        "alignment": "justify"
+    },
+    {
+        "bbox": [
+            1748,
+            1686,
+            2358,
+            1904
+        ],
+        "category": "Text",
+        "text": "স্বাঃ-\n(ডা মোঃ নুরুল ইসলাম)\nসিভিল সার্জন\nখাগড়াছড়ি পার্বত্য জেলা।",
+        "font_size": "11",
+        "font_style": [
+            "normal"
+        ],
+        "page_alignment": "right",
+        "alignment": "center"
+    },
+    {
+        "bbox": [
+            1790,
+            1899,
+            2374,
+            2038
+        ],
+        "category": "Table",
+        "text": "<table><tr><td rowspan=\"2\" style=\"font-size: 11px; font-weight: normal; font-style: normal; text-decoration: none; text-align: right;\">তারিখঃ</td><td style=\"font-size: 11px; font-weight: normal; font-style: normal; text-decoration: none; text-align: right;\">১২/৮/৮৭ ইং</td></tr><tr><td style=\"font-size: 11px; font-weight: normal; font-style: normal; text-decoration: none; text-align: right;\">২৬/৪/৯৪ বাং</td></tr></table>",
+        "page_alignment": "right",
+        "alignment": "right"
+    },
+    {
+        "bbox": [
+            357,
+            1904,
+            1439,
+            2023
+        ],
+        "category": "Text",
+        "text": "স্বারক নং- সি,এশ/খাগড়াছড়ি/৮৭/৫৬৫২/১(৪)",
+        "font_size": "11",
+        "font_style": [
+            "normal"
+        ],
+        "page_alignment": "left",
+        "alignment": "center"
+    },
+    {
+        "bbox": [
+            355,
+            2003,
+            1387,
+            2080
+        ],
+        "category": "Text",
+        "text": "অনুলিপি সদয় অবগতির জন্য প্রেরণ করা গেল ঃ-",
+        "font_size": "11",
+        "font_style": [
+            "normal"
+        ],
+        "page_alignment": "left",
+        "alignment": "center"
+    },
+    {
+        "bbox": [
+            355,
+            2083,
+            2454,
+            2178
+        ],
+        "category": "List-item",
+        "text": "১। মহা পরিচালক, স্বাস্থ্য অধিদপ্তর, বাংলাদেশ, ঢাকা দৃষ্টি আকর্ষন পরিচালক (প্রশাসন ও অর্থ)।",
+        "font_size": "11",
+        "font_style": [
+            "normal"
+        ],
+        "page_alignment": "justify",
+        "alignment": "center"
+    },
+    {
+        "bbox": [
+            355,
+            2163,
+            1267,
+            2235
+        ],
+        "category": "List-item",
+        "text": "২। চেয়ারম্যান উপজেলা পরিষদ, রামগড়।",
+        "font_size": "11",
+        "font_style": [
+            "normal"
+        ],
+        "page_alignment": "left",
+        "alignment": "center"
+    },
+    {
+        "bbox": [
+            350,
+            2238,
+            2040,
+            2328
+        ],
+        "category": "List-item",
+        "text": "৩। ডাঃ মোঃ লুৎফর রহমান, মেডিকেল অফিসার জেলা হাসপাতাল, পটুয়াখানী।",
+        "font_size": "11",
+        "font_style": [
+            "normal"
+        ],
+        "page_alignment": "justify",
+        "alignment": "center"
+    },
+    {
+        "bbox": [
+            350,
+            2310,
+            2199,
+            2443
+        ],
+        "category": "List-item",
+        "text": "৪। ডাঃঅসিত বরন দে, উপজেলা স্বাস্থ্য ও পরিবার পরিকল্পনা কর্মকর্তা, চিতলমারী জেলা\nবাগেরহাট।",
+        "font_size": "11",
+        "font_style": [
+            "normal"
+        ],
+        "page_alignment": "justify",
+        "alignment": "left"
+    },
+    {
+        "bbox": [
+            1822,
+            2448,
+            2356,
+            2656
+        ],
+        "category": "Picture",
+        "page_alignment": "right"
+    },
+    {
+        "bbox": [
+            1763,
+            2611,
+            2292,
+            2729
+        ],
+        "category": "Text",
+        "text": "সিভিল সার্জন\nখাগড়াছড়ি পার্বত্য জেলা।",
+        "font_size": "11",
+        "font_style": [
+            "normal"
+        ],
+        "page_alignment": "right",
+        "alignment": "center"
+    },
+    {
+        "bbox": [
+            1714,
+            2711,
+            2306,
+            2831
+        ],
+        "category": "Picture",
+        "page_alignment": "right"
+    }
+]

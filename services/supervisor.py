@@ -1,64 +1,62 @@
-import os
-import json
-import logging
-
-logging.basicConfig(
-    filename="supervision_logs.log",
-    filemode="w",
-    format="%(asctime)s - %(name)s - %(message)s",
-    level=logging.INFO
-)
-
+from config import *
+from services.html_parser import HTMLParser
 
 class Supervisor:
 
-    def __init__(self,data_dir):
+    def __init__(self):
+        self.picture_schema = PICTURE_SCHEMA
+        self.table_schema = TABLE_SCHEMA
+        self.overall_schema = OVERALL_SCHEMA
+        self.categories = CATEGORIES
+        self.font_sizes = FONT_SIZES
+        self.font_styles = FONT_STYLES
+        self.alignments = ALIGNMENTS
+        self.css_styles = CSS_STYLES
 
-        self.data_dir = data_dir
-        self.font_sizes = {
-            "Title": '17',
-            "Page-header": '12',
-            "Section-header": '12',
-            "Text": '11',
-            "List-item": '11',
-            "Table": '11',
-            "Caption": '10',
-            "Footnote": '9',
-            "Page-footer": '9'
-        }
+        self.html_parser = HTMLParser()
 
-
-    def validate_objects(self, entry):
+    
+    def validate_schema(self, entry: dict):
 
         if "category" not in entry.keys():
             return False
-
+        
+        schema = None
         if entry["category"] == "Picture":
-            for key in entry.keys():
-                if key not in ["bbox", "category", "page_alignment"]:
-                    return False
+            schema = self.picture_schema
         elif entry["category"] == "Table":
-            for key in entry.keys():
-                if key not in ["bbox", "category", "text", "page_alignment", "alignment"]:
-                    return False   
+            schema = self.table_schema
         else:
-            for key in entry.keys():
-                if key not in ["bbox", "category", "text", "font_size", "font_style", "page_alignment", "alignment"]:
-                    return False
-                
+            schema = self.overall_schema
+
+        available_schema = set(entry.keys())
+        required_schema = set(schema)
+        extra_schema = available_schema.symmetric_difference(required_schema)
+
+        if len(extra_schema) == 0:
+            return True
+        else:
+            return False
+        
+
+    def validate_bbox(self, bbox: list):
+
+        pos_coord = [int(coord)>0 for coord in bbox]
+        if False in pos_coord:
+            return False
+        
+        if bbox[0]>bbox[2] or bbox[1]>bbox[3]:
+            return False
+        
         return True
     
 
-    def validate_null_values(self, entry):
+    def validate_category(self, category: str):
 
-        for key in entry.keys():
-            if entry[key] in ["", None]:
-                return False
-
-        return True
+        return category in self.categories
     
 
-    def validate_font_size(self, entry):
+    def validate_font_size(self, entry: dict):
 
         if entry["category"] in ["Picture", "Table"]:
             return True
@@ -66,187 +64,62 @@ class Supervisor:
         return self.font_sizes[entry["category"]] == entry["font_size"]
     
 
-    def validate_values(self, entry):
+    def validate_font_style(self, font_style: list):
 
-        if entry["category"]!="Picture" and entry["category"] not in self.font_sizes.keys():
-            return False
+        for style in font_style:
+            if style not in self.font_styles:
+                return False
+            
+        return True
+    
 
-        if entry["category"] == "Picture":
-            if entry["page_alignment"] not in ["left", "center", "right", "justify"]:
+    def validate_alignment(self, alignment: str):
+
+        return alignment in self.alignments
+    
+
+    def validate_css_properties(self, css_style: dict):
+
+        expected_properties = list(self.css_styles.keys())
+        available_properties = list(css_style.keys())
+
+        if not sorted(expected_properties) == sorted(available_properties):
+            expected_properties = set(expected_properties)
+            available_properties = set(available_properties)
+            missing_properties = expected_properties.difference(available_properties)
+            extra_properties = available_properties.difference(expected_properties)
+            return list(missing_properties), list(extra_properties)
+        
+        return [],[]
+    
+
+    def validate_css_style(self, css_style):
+
+        for key, val in self.css_styles.items():
+            if css_style[key] not in val:
                 return False
-        elif entry["category"] == "Table":
-            if entry["page_alignment"] not in ["left", "center", "right", "justify"]:
-                return False
-            if entry["alignment"] not in ["left", "center", "right", "justify"]:
-                return False
-        else:
-            if entry["page_alignment"] not in ["left", "center", "right", "justify"]:
-                return False
-            if entry["alignment"] not in ["left", "center", "right", "justify"]:
-                return False
-            for tmp in entry["font_style"]:
-                if tmp not in ["normal", "bold", "italic", "underline"]:
-                    return False
 
         return True
     
 
-    def check_files_availability(self):
+    def validate_table_style(self, table_content):
 
-        for folder in os.listdir(self.data_dir):
-            fnames = os.listdir(os.path.join(self.data_dir, folder))
+        tags = self.html_parser.get_html_tags(table_content)
 
-            has_img = [fname.endswith(".jpg") or fname.endswith(".png") for fname in fnames]
-            has_json = [fname.endswith(".json") for fname in fnames]
+        errors = []
+        for tag in tags:
+            # print(tag)
+            css_style = self.html_parser.get_css_properties(tag)
 
+            missing_properties, extra_properties = self.validate_css_properties(css_style=css_style)
+            if len(missing_properties)>0: errors.append(f"Missing CSS properties: {missing_properties}")
+            if len(extra_properties)>0: errors.append(f"Extra CSS properties: {extra_properties}")
 
-            if len(fnames)==2 and (True in has_img and True in has_json):
-                continue
-            else:
-                logging.info(f"Required file missing in: {folder}")
-
-
-
-    def check_annotation_schema(self, print_details=False):
-
-        for root, _, fnames in os.walk(self.data_dir):
-            for fname in fnames:
-                if not fname.endswith(".json"):
-                    continue
-
-                try:
-                    with open(os.path.join(root, fname), "r", encoding="utf-8", errors="replace") as f:
-                        annotations = json.load(f)
-                except Exception as e:
-                    logging.info(f"Error while reading annotation file: {fname}")
-                    logging.info(f"Error: {e}")
-                    continue 
-                
-                try:
-                    schema_errors = []
-                    for entry in annotations:
-                        if not self.validate_objects(entry):
-                            schema_errors.append(entry)
-
-                    if len(schema_errors)>0:
-                        logging.info(f"{len(schema_errors)} entries with schema errors found in: {fname}")
-                        if print_details:
-                            logging.info("Entries are-")
-                            for entry in schema_errors:
-                                logging.info(entry)
-                except Exception as e:
-                    logging.info(f"Unknown error at: {fname}")
-                    logging.info(f"Error: {e}")
+            # print(errors)
+            # print("")
 
 
-    def check_annotation_values(self, print_details=False):
+            # if not self.validate_css_style(css_style):
+            #     return False
 
-        for root, _, fnames in os.walk(self.data_dir):
-            for fname in fnames:
-                if not fname.endswith(".json"):
-                    continue
-
-                try:
-                    with open(os.path.join(root, fname), "r", encoding="utf-8", errors="replace") as f:
-                        annotations = json.load(f)
-                except Exception as e:
-                    logging.info(f"Error while reading annotation file: {fname}")
-                    logging.info(f"Error: {e}")
-                    continue 
-                
-                try:
-                    null_errors = []
-                    wrong_errors = []
-                    for entry in annotations:
-                        if not self.validate_null_values(entry):
-                            null_errors.append(entry)
-                        if not self.validate_values(entry):
-                            wrong_errors.append(entry)
-
-                    if len(null_errors)>0:
-                        logging.info(f"{len(null_errors)} entries with missing values found in: {fname}")
-                        if print_details:
-                            logging.info("Entries are-")
-                            for entry in null_errors:
-                                logging.info(entry)
-
-                    if len(wrong_errors)>0:
-                        logging.info(f"{len(wrong_errors)} entries with wrong values found in: {fname}")
-                        if print_details:
-                            logging.info("Entries are-")
-                            for entry in wrong_errors:
-                                logging.info(entry)
-                except Exception as e:
-                    logging.info(f"Unknown error at: {fname}")
-                    logging.info(f"Error: {e}")
-
-
-
-    def check_font_size(self, print_details=False):
-
-        for root, _, fnames in os.walk(self.data_dir):
-            for fname in fnames:
-                if not fname.endswith(".json"):
-                    continue
-
-                try:
-                    with open(os.path.join(root, fname), "r", encoding="utf-8", errors="replace") as f:
-                        annotations = json.load(f)
-                except Exception as e:
-                    logging.info(f"Error while reading annotation file: {fname}")
-                    logging.info(f"Error: {e}")
-                    continue 
-                
-                try:
-                    font_size_errors = []
-                    for entry in annotations:
-                        if not self.validate_font_size(entry):
-                            font_size_errors.append(entry)
-
-                    if len(font_size_errors)>0:
-                        logging.info(f"{len(font_size_errors)} entries with wrong values found in: {fname}")
-                        if print_details:
-                            logging.info("Entries are-")
-                            for entry in font_size_errors:
-                                logging.info(entry)
-                except Exception as e:
-                    logging.info(f"Unknown error at: {fname}")
-                    logging.info(f"Error: {e}")
-
-
-
-    def main(self):
-        
-        logging.info(f"Starting supervision on {self.data_dir}\n\n\n")
-
-        total_data = os.listdir(self.data_dir)
-        logging.info(f"Total data: {len(total_data)}")
-        
-        logging.info(f"Checking file availability.")
-        logging.info("----------------------------------------------------------------------------------")
-        self.check_files_availability()
-        logging.info("\n\n")
-
-        logging.info(f"Checking annotation schema.")
-        logging.info("----------------------------------------------------------------------------------")
-        self.check_annotation_schema(print_details=True)
-        logging.info("\n\n")
-
-        logging.info(f"Checking annotation values.")
-        logging.info("----------------------------------------------------------------------------------")
-        self.check_annotation_values(print_details=True)
-        logging.info("\n\n")
-
-        logging.info(f"Checking font size.")
-        logging.info("----------------------------------------------------------------------------------")
-        self.check_font_size(print_details=True)
-        logging.info("\n\n")
-
-
-
-if __name__ == "__main__":
-
-    data_path = "/media/mehedi-shesher/WhyAlwaysMe/Files/Work/Code/github/ocr/data_annotator/data/For Supervision/split1(mehedi)/bucket/"
-
-
-    Supervisor(data_dir=data_path).main()
+        return errors

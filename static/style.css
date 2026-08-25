@@ -4,7 +4,32 @@
     box-sizing: border-box;
 }
 
+/* Light theme (default) */
 :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f3f3f3;
+    --bg-tertiary: #e7e7e7;
+    --text-primary: #1f1f1f;
+    --text-secondary: #616161;
+    --text-muted: #8a8a8a;
+    --border-color: #d4d4d4;
+    --accent-primary: #0066b8;
+    --accent-hover: #005094;
+    --success: #16825d;
+    --warning: #b5670a;
+    --danger: #c72e2e;
+    --purple: #8a3fa0;
+
+    --canvas-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    --json-string: #16825d;
+    --json-key: #0451a5;
+    --json-number: #b5670a;
+    --json-boolean: #8a3fa0;
+    --json-null: #c72e2e;
+}
+
+/* Dark theme */
+:root[data-theme="dark"] {
     --bg-primary: #1e1e1e;
     --bg-secondary: #252526;
     --bg-tertiary: #2d2d30;
@@ -18,6 +43,13 @@
     --warning: #ce9178;
     --danger: #f48771;
     --purple: #c586c0;
+
+    --canvas-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    --json-string: #34d399;
+    --json-key: #60a5fa;
+    --json-number: #fb923c;
+    --json-boolean: #a78bfa;
+    --json-null: #f87171;
 }
 
 body {
@@ -194,7 +226,7 @@ body {
 
 #canvas {
     display: none;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    box-shadow: var(--canvas-shadow);
     cursor: crosshair;
     background: white;
 }
@@ -450,7 +482,7 @@ body {
     padding: 16px;
     color: var(--text-primary);
     font-family: 'Courier New', monospace;
-    font-size: 26px;
+    font-size: 12px;
     resize: none;
     outline: none;
 }
@@ -461,23 +493,23 @@ body {
 
 /* JSON Syntax Highlighting */
 .json-string {
-    color: #34d399;
+    color: var(--json-string);
 }
 
 .json-key {
-    color: #60a5fa;
+    color: var(--json-key);
 }
 
 .json-number {
-    color: #fb923c;
+    color: var(--json-number);
 }
 
 .json-boolean {
-    color: #a78bfa;
+    color: var(--json-boolean);
 }
 
 .json-null {
-    color: #f87171;
+    color: var(--json-null);
 }
 
 /* Buttons */
@@ -511,6 +543,37 @@ body {
 .small-btn svg {
     width: 14px;
     height: 14px;
+}
+
+/* Make JSON-panel icon buttons visually match the main toolbar icon buttons */
+.json-panel .icon-btn {
+    width: 40px;
+    height: 40px;
+    background: var(--bg-tertiary);
+    border: none;
+    border-radius: 8px;
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+.json-panel .icon-btn:hover:not(:disabled) {
+    background: var(--bg-primary);
+}
+.json-panel .icon-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Align JSON zoom display with main toolbar */
+.json-panel .zoom-display, #jsonZoomLevel {
+    min-width: 50px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
 }
 
 /* Responsive adjustments */
@@ -569,7 +632,20 @@ body {
 .find-replace-input:focus {
     outline: none;
     border-color: var(--accent-primary);
-    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 25%, transparent);
+}
+
+/* Theme toggle: show only the icon for the theme you can switch to */
+#themeToggleBtn .theme-icon-dark {
+    display: none;
+}
+
+:root[data-theme="dark"] #themeToggleBtn .theme-icon-dark {
+    display: block;
+}
+
+:root[data-theme="dark"] #themeToggleBtn .theme-icon-light {
+    display: none;
 }
 
 .find-replace-btn {

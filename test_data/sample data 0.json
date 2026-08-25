@@ -1,0 +1,38 @@
+[
+    {
+        "bbox": [
+            1780,
+            239,
+            2380,
+            347
+        ],
+        "category": "Table",
+        "text": "<table><tr><td rowspan=\"2\" style=\"font-size: 11px; font-weight: normal; font-style: normal; text-decoration: none; text-align: right;\">তারিখঃ</td><td style=\"font-size: 11px; font-weight: normal; font-style: normal; text-decoration: none; text-align: right;\">/৮৭ ইং</td></tr><tr><td style=\"font-size: 11px; font-weight: normal; font-style: normal; text-decoration: none; text-align: right;\">/৯৪ বাং</td></tr></table>",
+        "page_alignment": "right",
+        "alignment": "right"
+    },
+    {
+        "bbox": [
+            1780,
+            239,
+            2380,
+            347
+        ],
+        "category": "Table",
+        "text": "<table><tr><td rowspan=\"2\" style=\"font-size: 11px; font-style: normal; text-decoration: none; text-align: right;\">তারিখঃ</td><td style=\"font-size: 11px; font-weight: normal; font-style: normal; text-decoration: none; text-align: right;\">/৮৭ ইং</td></tr><tr><td style=\"font-size: 11px; border: 10px; font-weight: normal; font-style: normal; text-decoration: none; text-align: right;\">/৯৪ বাং</td></tr></table>",
+        "page_alignment": "right",
+        "alignment": "right"
+    },
+    {
+        "bbox": [
+            1780,
+            239,
+            2380,
+            347
+        ],
+        "category": "Table",
+        "text": "<table><tr><td rowspan=\"2\" style=\"font-sizes: 11px; font-weight: normal; font-style: normal; text-decoration: none; text-align: right;\">তারিখঃ</td><td style=\"font-size: 11px; font-weight: normal; font-style: normal; text-decoration: none; text-align: right;\">/৮৭ ইং</td></tr><tr><td style=\"font-size: 11px; font-weight: normal; font-style: normal; text-decoration: none; text-align: right;\">/৯৪ বাং</td></tr></table>",
+        "page_alignment": "right",
+        "alignment": "right"
+    }
+]

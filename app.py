@@ -1,84 +1,164 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, File, UploadFile, HTTPException, Request
+from fastapi.responses import HTMLResponse
+from typing import List
 from fastapi.staticfiles import StaticFiles
-from pathlib import Path
-import shutil
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.templating import Jinja2Templates
+import base64
 import json
+import shutil
+from pathlib import Path
+from contextlib import asynccontextmanager
 
-app = FastAPI()
+from services.supervisor import Supervisor
 
-# Create uploads directory if it doesn't exist
-UPLOAD_DIR = Path("uploads")
-UPLOAD_DIR.mkdir(exist_ok=True)
 
-# Mount static files
+@asynccontextmanager
+async def lifespan(app:FastAPI):
+
+    try:
+        print("Application has been started successfully.")
+    
+    except Exception as e:
+        print(f"Error while starting application: {e}")
+    
+    yield
+
+app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Store current files
-current_files = {"image": None, "json": None}
+templates = Jinja2Templates(directory="templates")
+
+@app.get("/", response_class=HTMLResponse)
+async def root(request: Request):
+
+    return templates.TemplateResponse(request, "index.html")
 
 
-@app.get("/")
-async def get_home():
-    """Serve the main HTML file"""
-    return FileResponse("static/index.html")
+@app.post("/upload_image")
+async def upload_image(uploaded_file: UploadFile=File(...)):
+
+    print(uploaded_file.content_type)
+
+    if not uploaded_file.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=415,
+            detail="Unsupported file type."
+        )
+
+    content = await uploaded_file.read()
+
+    image_name = uploaded_file.filename
+
+    image_content = base64.b64encode(content).decode("utf-8")
+
+    return {
+        "name": image_name,
+        "content": image_content
+    }
+    
+@app.post("/upload_json")
+async def upload_json(uploaded_file: UploadFile=File(...)):
+    
+    if not uploaded_file.content_type.endswith("json"):
+        raise HTTPException(
+            status_code=415,
+            detail="Unsupported file type."
+        )
+    
+    content = await uploaded_file.read()
+
+    json_name = uploaded_file.filename
+
+    json_content = json.loads(content.decode("utf-8"))
+
+    return {
+        "name": json_name,
+        "content": json_content
+    }
 
 
-@app.post("/upload-image")
-async def upload_image(file: UploadFile = File(...)):
-    """Upload an image file"""
-    try:
-        file_path = UPLOAD_DIR / file.filename
-        with file_path.open("wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+@app.post("/validate_json")
+async def validate_json(data: List[dict]):
+
+    supervisor = Supervisor()
+
+    all_errors = []
+    for entry in data:
+        try:
+            if not supervisor.validate_schema(entry=entry):
+                all_errors.append(f"Schema error has been found in: {entry}")
+                continue
+            
+            if not supervisor.validate_category(category=entry["category"]):
+                all_errors.append(f"Invalid category has been found in: {entry}")
+                continue
+            
+            errors = []
+            if not supervisor.validate_bbox(bbox=entry["bbox"]):
+                errors.append("bbox")
+            if not supervisor.validate_alignment(alignment=entry["page_alignment"]):
+                errors.append("page alignment")
+            
+            if entry["category"] == "Picture":
+                if len(errors)>0:
+                    errors_all = ", ".join(errors)
+                    all_errors.append(f"Invalid {errors_all} have been found in: {entry}")
+                continue
+
+            if not supervisor.validate_alignment(alignment=entry["alignment"]):
+                errors.append("alignment")
+
+            if entry["category"] == "Table":
+                if len(errors)>0:
+                    errors_all = ", ".join(errors)
+                    all_errors.append(f"Invalid {errors_all} have been found in: {entry}")
+                continue
+
+            if not supervisor.validate_font_size(entry=entry):
+                errors.append("font size")
+            
+            if not supervisor.validate_font_style(font_style=entry["font_style"]):
+                errors.append("font style")
+
+            if len(errors)>0:
+                errors_all = ", ".join(errors)
+                all_errors.append(f"Invalid {errors_all} have been found in: {entry}")
         
-        current_files["image"] = file.filename
-        return {"filename": file.filename, "message": "Image uploaded successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail="Unknown error has occured while validating json."
+            )
+
+    return {
+        "error_count": len(all_errors),
+        "error_detail": all_errors
+    }
 
 
-@app.post("/upload-json")
-async def upload_json(file: UploadFile = File(...)):
-    """Upload a JSON annotations file"""
-    try:
-        file_path = UPLOAD_DIR / file.filename
-        content = await file.read()
-        json_content = json.loads(content.decode('utf-8'))
-        
-        with file_path.open("w") as f:
-            json.dump(json_content, f, indent=2)
-        
-        current_files["json"] = file.filename
-        return {"filename": file.filename, "content": json_content, "message": "JSON uploaded successfully"}
-    except Exception as e:
-        print(f"Error while uploading json: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+@app.post("/validate_json_dev")
+async def validate_json_dev(data: List[dict]):
 
+    supervisor = Supervisor()
+    for entry in data:
+        if entry["category"]!="Table":
+            continue
 
-@app.post("/save-json")
-async def save_json(data: dict):
-    """Save JSON annotations"""
-    try:
-        filename = data.get("filename", "annotations.json")
-        json_data = data.get("data", {})
-        
-        file_path = UPLOAD_DIR / filename
-        with file_path.open("w") as f:
-            json.dump(json_data, f, ensure_ascii=False, indent=4)
+        errors = supervisor.validate_table_style(table_content=entry["text"])
+        print(errors)
 
-        return {"message": "JSON saved successfully", "filename": filename}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return {"status": "All OK"}
 
-
-@app.get("/image/{filename}")
-async def get_image(filename: str):
-    """Serve an uploaded image"""
-    file_path = UPLOAD_DIR / filename
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="Image not found")
-    return FileResponse(file_path)
 
 
 if __name__ == "__main__":

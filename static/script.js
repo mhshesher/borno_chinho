@@ -51,19 +51,25 @@ async function uploadImage(event) {
     if (!file) return;
     
     const formData = new FormData();
-    formData.append('file', file);
+    // FastAPI endpoint expects field name 'uploaded_file'
+    formData.append('uploaded_file', file);
     
     try {
-        const response = await fetch('/upload-image', {
+        const response = await fetch('/upload_image', {
             method: 'POST',
             body: formData
         });
         
         if (response.ok) {
             const data = await response.json();
-            currentImageFile = data.filename;
+            // Backend returns { name: <filename>, content: <base64> }
+            currentImageFile = data.name || file.name;
             fileName.textContent = file.name;
-            loadImage(data.filename);
+
+            // Use the returned base64 content to display the image
+            const mime = file.type || 'image/png';
+            const src = `data:${mime};base64,${data.content}`;
+            loadImage(src);
         } else {
             alert('Failed to upload image');
         }
@@ -77,17 +83,18 @@ async function uploadJSONFile(event) {
     if (!file) return;
     
     const formData = new FormData();
-    formData.append('file', file);
+    // FastAPI endpoint expects field name 'uploaded_file'
+    formData.append('uploaded_file', file);
     
     try {
-        const response = await fetch('/upload-json', {
+        const response = await fetch('/upload_json', {
             method: 'POST',
             body: formData
         });
         
         if (response.ok) {
             const data = await response.json();
-            currentJsonFile = data.filename;
+            currentJsonFile = data.name || file.name;
             jsonEditor.value = JSON.stringify(data.content, null, 2);
         } else {
             alert('Failed to upload JSON');
@@ -97,7 +104,7 @@ async function uploadJSONFile(event) {
     }
 }
 
-function loadImage(filename) {
+function loadImage(src) {
     image = new Image();
     image.onload = function() {
         zoomLevel = 1.0;
@@ -113,7 +120,8 @@ function loadImage(filename) {
             lucide.createIcons();
         }
     };
-    image.src = '/image/' + filename;
+    // `src` can be a data URL or a path
+    image.src = src;
 }
 
 function displayImage() {
@@ -405,52 +413,114 @@ function triggerSaveDialog() {
         alert('Error saving JSON: ' + error.message);
     }
 }
-
 async function saveJSON() {
     try {
         const jsonData = JSON.parse(jsonEditor.value);
-        
-        const filename = currentJsonFile || 'annotations.json';
-        
-        const response = await fetch('/save-json', {
+
+        // Ensure payload is an array when submitting to validate_json
+        const payload = Array.isArray(jsonData) ? jsonData : [jsonData];
+
+        const response = await fetch('/validate_json', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                filename: filename,
-                data: jsonData
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         });
-        
-        if (response.ok) {
-            const result = await response.json();
-            currentJsonFile = result.filename;
-            
-            // Show success feedback
+
+        if (!response.ok) {
+            alert('Validation request failed');
+            return;
+        }
+
+        const result = await response.json();
+        if (result.error_count === 0) {
+            // No validation errors — proceed to save (previous behavior: download local file)
+            triggerSaveDialog();
+            // show quick saved feedback
             const saveBtn = document.getElementById('saveJsonBtn');
-            const originalHTML = saveBtn.innerHTML;
-            saveBtn.innerHTML = '<i data-lucide="check"></i> Saved!';
-            saveBtn.style.background = '#34d399';
-            
-            // Re-initialize icon
-            if (typeof lucide !== 'undefined') {
-                lucide.createIcons();
+            if (saveBtn) {
+                const originalHTML = saveBtn.innerHTML;
+                saveBtn.innerHTML = '<i data-lucide="check"></i> Saved!';
+                saveBtn.style.background = '#34d399';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+                setTimeout(() => {
+                    saveBtn.innerHTML = originalHTML;
+                    saveBtn.style.background = '';
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                }, 1400);
             }
-            
-            setTimeout(() => {
-                saveBtn.innerHTML = originalHTML;
-                saveBtn.style.background = '';
-                if (typeof lucide !== 'undefined') {
-                    lucide.createIcons();
-                }
-            }, 2000);
         } else {
-            alert('Failed to save JSON');
+            // Show errors in a popup/modal
+            const details = Array.isArray(result.error_detail) ? result.error_detail : [String(result.error_detail)];
+            showValidationErrors(details);
         }
     } catch (error) {
-        alert('Invalid JSON format: ' + error.message);
+        alert('Invalid JSON format: ' + (error.message || error));
     }
+}
+
+function showValidationErrors(errors) {
+    // Remove any existing modal
+    const existing = document.getElementById('validationErrorsModal');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'validationErrorsModal';
+    overlay.style.position = 'fixed';
+    overlay.style.left = 0;
+    overlay.style.top = 0;
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.background = 'rgba(0,0,0,0.4)';
+    overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.zIndex = 9999;
+
+    const box = document.createElement('div');
+    // Use app theme variables so the modal matches the UI
+    box.style.background = 'var(--bg-secondary)';
+    box.style.color = 'var(--text-primary)';
+    box.style.border = '1px solid var(--border-color)';
+    box.style.padding = '18px';
+    box.style.borderRadius = '8px';
+    box.style.maxWidth = '720px';
+    box.style.width = '90%';
+    box.style.maxHeight = '80%';
+    box.style.overflow = 'auto';
+    box.style.boxShadow = '0 6px 24px rgba(0,0,0,0.4)';
+
+    const title = document.createElement('h3');
+    title.textContent = `Validation Errors (${errors.length})`;
+    title.style.marginTop = '0';
+    box.appendChild(title);
+
+    const list = document.createElement('ul');
+    list.style.paddingLeft = '18px';
+    errors.forEach(err => {
+        const li = document.createElement('li');
+        li.textContent = typeof err === 'string' ? err : JSON.stringify(err);
+        li.style.color = 'var(--text-secondary)';
+        li.style.marginBottom = '6px';
+        list.appendChild(li);
+    });
+    box.appendChild(list);
+
+    const btnRow = document.createElement('div');
+    btnRow.style.display = 'flex';
+    btnRow.style.justifyContent = 'flex-end';
+    btnRow.style.marginTop = '12px';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Close';
+    // Use themed primary button so it fits the application style
+    closeBtn.className = 'small-btn primary';
+    closeBtn.style.marginLeft = '8px';
+    closeBtn.onclick = () => overlay.remove();
+    btnRow.appendChild(closeBtn);
+
+    box.appendChild(btnRow);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
 }
 
 // Keyboard shortcuts
@@ -617,6 +687,25 @@ function replaceAll() {
     jsonEditor.value = jsonEditor.value.replaceAll(findInput, replaceInput);
     findIndex = 0;
     updateFindCounter();
+}
+
+// Theme toggle. Light is the default; the initial theme is applied in index.html
+// before first paint, so this only handles switching and persisting.
+function toggleTheme() {
+    const root = document.documentElement;
+    const isDark = root.getAttribute('data-theme') === 'dark';
+
+    if (isDark) {
+        root.removeAttribute('data-theme');
+    } else {
+        root.setAttribute('data-theme', 'dark');
+    }
+
+    try {
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+    } catch (e) {
+        // localStorage unavailable - the theme still switches for this session
+    }
 }
 
 // Set up find input listener for counter update

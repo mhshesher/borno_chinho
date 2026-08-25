@@ -5,6 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Annotation Tool</title>
     <link rel="stylesheet" href="/static/style.css">
+    <!-- Apply the saved theme before first paint so there is no flash -->
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem('theme');
+                if (saved === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                }
+            } catch (e) {
+                /* localStorage unavailable (private mode, blocked cookies) - stay on light */
+            }
+        })();
+    </script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -56,6 +69,11 @@
                         <i data-lucide="rotate-ccw"></i>
                     </button>
                     <div class="divider"></div>
+                    <button class="icon-btn" id="themeToggleBtn" title="Toggle theme" onclick="toggleTheme()">
+                        <i data-lucide="moon" class="theme-icon-light"></i>
+                        <i data-lucide="sun" class="theme-icon-dark"></i>
+                    </button>
+                    <div class="divider"></div>
                     <button class="icon-btn danger" id="clearBtn" onclick="clearRectangles()" disabled>
                         <i data-lucide="trash-2"></i>
                     </button>
@@ -103,20 +121,20 @@
                             <i data-lucide="upload"></i>
                             Load
                         </button>
-                        <button class="small-btn" title="JSON Zoom Out" id="jsonZoomOutBtn" onclick="zoomJsonOut()">
+                        <button class="icon-btn" title="JSON Zoom Out" id="jsonZoomOutBtn" onclick="zoomJsonOut()">
                             <i data-lucide="zoom-out"></i>
                         </button>
-                        <button class="small-btn" title="JSON Zoom In" id="jsonZoomInBtn" onclick="zoomJsonIn()">
+                        <button class="icon-btn" title="JSON Zoom In" id="jsonZoomInBtn" onclick="zoomJsonIn()">
                             <i data-lucide="zoom-in"></i>
                         </button>
-                        <button class="small-btn" title="Reset JSON Zoom" id="jsonResetBtn" onclick="resetJsonZoom()">
+                        <button class="icon-btn" title="Reset JSON Zoom" id="jsonResetBtn" onclick="resetJsonZoom()">
                             <i data-lucide="rotate-ccw"></i>
                         </button>
                         <div class="divider"></div>
                         <div style="display:flex;align-items:center;gap:8px;padding-left:6px;">
                             <span class="zoom-display" id="jsonZoomLevel" style="min-width:50px;">100%</span>
                         </div>
-                        <button class="small-btn primary" id="saveJsonBtn" onclick="triggerSaveDialog()">
+                        <button class="small-btn primary" id="saveJsonBtn" onclick="saveJSON()">
                             <i data-lucide="save"></i>
                             Save
                         </button>
