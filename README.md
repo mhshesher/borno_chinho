@@ -53,6 +53,8 @@ python app.py
 
 Then open `http://localhost:2828`. Host and port are set in [config.py](config.py).
 
+New to the tool? See the [User Guide](USER_GUIDE.md) for how to load, review, and save annotations.
+
 ## Annotation format
 
 Annotations are a JSON array of objects. Required keys depend on the category:
