@@ -92,4 +92,6 @@ Drag the divider between panes to resize; double-click it to restore the 60/40 s
 
 ## License
 
+Released under the [MIT License](LICENSE).
+
 © 2025–2026 Md. Mehedi Hasan.
