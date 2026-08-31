@@ -22,7 +22,7 @@ def setup_logging():
         )
     )
 
-    for name in ["bornochinho", "uvicorn", "uvicorn.error"]:
+    for name in ["bornochinho", "uvicorn", "uvicorn.error", "uvicorn.access"]:
         logger = logging.getLogger(name)
         logger.setLevel(LOG_LEVEL)
         logger.handlers = [handler]

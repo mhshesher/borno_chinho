@@ -36,8 +36,8 @@ static/                 Frontend JS, CSS, and images
 ## Installation
 
 ```bash
-git clone https://github.com/mhshesher/BornoChinho.git
-cd BornoChinho
+git clone https://github.com/mhshesher/borno_chinho.git
+cd borno_chinho
 
 python -m venv venv
 source venv/bin/activate      # Windows: venv\Scripts\activate

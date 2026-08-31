@@ -1,6 +1,26 @@
+# Python
 __pycache__/
+*.py[cod]
+*.egg-info/
+
+# Virtual environments
+venv/
+.venv/
+env/
+activate_venv.sh
+
+# Application data
 uploads
 logs
 *.log
+
+# Environment / secrets
+.env
+.env.*
+
+# Editor and OS
 .claude
-activate_venv.sh
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

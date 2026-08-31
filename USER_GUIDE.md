@@ -116,4 +116,4 @@ Where the file goes depends on how it was loaded: a mounted file is **overwritte
 
 ## Getting help
 
-Click the **info** button in the toolbar for a quick in-app reference, or open an issue on [GitHub](https://github.com/mhshesher/BornoChinho).
+Click the **info** button in the toolbar for a quick in-app reference, or open an issue on [GitHub](https://github.com/mhshesher/borno_chinho).
