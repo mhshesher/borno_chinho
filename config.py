@@ -1,9 +1,17 @@
-LOG_DIR = "logs"
+import os
+
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+LOG_DIR = os.path.join(ROOT_DIR, "logs")
+
 LOG_FILE = "app.log"
 LOG_LEVEL = "INFO"
 LOG_MAX_BYTES = 5 * 1024 * 1024
 LOG_BACKUP_COUNT = 3
 
+HOST = "0.0.0.0"
+
+PORT = 2828
 
 PICTURE_SCHEMA = [
     "bbox", 

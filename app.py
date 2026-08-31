@@ -1,17 +1,17 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException, Request
-from fastapi.responses import HTMLResponse
-from typing import List
-from fastapi.staticfiles import StaticFiles
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.templating import Jinja2Templates
-import base64
 import json
-import shutil
-from pathlib import Path
+import base64
+import uvicorn
+from typing import List
 from contextlib import asynccontextmanager
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, File, UploadFile, HTTPException, Request
 
 from services.supervisor import Supervisor
 from logger import setup_logging, get_logger
+from config import HOST, PORT
 
 setup_logging()
 logger = get_logger("app")
@@ -25,6 +25,7 @@ async def lifespan(app:FastAPI):
     yield
 
     logger.info("Application stopped.")
+    
 
 app = FastAPI(lifespan=lifespan)
 
@@ -166,9 +167,9 @@ async def validate_json_dev(data: List[dict]):
 
 if __name__ == "__main__":
     logger.info("\n\n")
-    import uvicorn
+
     uvicorn.run("app:app", 
-                host="0.0.0.0", 
-                port=2828, 
+                host=HOST, 
+                port=PORT, 
                 reload=True
             )

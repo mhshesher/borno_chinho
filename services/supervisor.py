@@ -108,18 +108,10 @@ class Supervisor:
 
         errors = []
         for tag in tags:
-            # print(tag)
             css_style = self.html_parser.get_css_properties(tag)
 
             missing_properties, extra_properties = self.validate_css_properties(css_style=css_style)
             if len(missing_properties)>0: errors.append(f"Missing CSS properties: {missing_properties}")
             if len(extra_properties)>0: errors.append(f"Extra CSS properties: {extra_properties}")
-
-            # print(errors)
-            # print("")
-
-
-            # if not self.validate_css_style(css_style):
-            #     return False
 
         return errors
