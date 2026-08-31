@@ -3,3 +3,4 @@ uploads
 logs
 *.log
 .claude
+activate_venv.sh
