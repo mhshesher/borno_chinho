@@ -11,18 +11,20 @@ from pathlib import Path
 from contextlib import asynccontextmanager
 
 from services.supervisor import Supervisor
+from logger import setup_logging, get_logger
+
+setup_logging()
+logger = get_logger("app")
 
 
 @asynccontextmanager
 async def lifespan(app:FastAPI):
 
-    try:
-        print("Application has been started successfully.")
-    
-    except Exception as e:
-        print(f"Error while starting application: {e}")
-    
+    logger.info("Application started.")
+
     yield
+
+    logger.info("Application stopped.")
 
 app = FastAPI(lifespan=lifespan)
 
@@ -47,9 +49,8 @@ async def root(request: Request):
 @app.post("/upload_image")
 async def upload_image(uploaded_file: UploadFile=File(...)):
 
-    print(uploaded_file.content_type)
-
     if not uploaded_file.content_type.startswith("image/"):
+        logger.warning(f"Image upload rejected: '{uploaded_file.filename}' has unsupported type '{uploaded_file.content_type}'.")
         raise HTTPException(
             status_code=415,
             detail="Unsupported file type."
@@ -70,16 +71,25 @@ async def upload_image(uploaded_file: UploadFile=File(...)):
 async def upload_json(uploaded_file: UploadFile=File(...)):
     
     if not uploaded_file.content_type.endswith("json"):
+        logger.warning(f"Json upload rejected: '{uploaded_file.filename}' has unsupported type '{uploaded_file.content_type}'.")
         raise HTTPException(
             status_code=415,
             detail="Unsupported file type."
         )
-    
+
     content = await uploaded_file.read()
 
     json_name = uploaded_file.filename
 
-    json_content = json.loads(content.decode("utf-8"))
+    try:
+        json_content = json.loads(content.decode("utf-8"))
+
+    except (UnicodeDecodeError, json.JSONDecodeError) as e:
+        logger.warning(f"Json upload rejected: '{json_name}' could not be parsed: {e}")
+        raise HTTPException(
+            status_code=400,
+            detail="Malformed json file."
+        )
 
     return {
         "name": json_name,
@@ -106,8 +116,6 @@ async def validate_json(data: List[dict]):
             errors = []
             if not supervisor.validate_bbox(bbox=entry["bbox"]):
                 errors.append("bbox")
-            if not supervisor.validate_alignment(alignment=entry["page_alignment"]):
-                errors.append("page alignment")
             
             if entry["category"] == "Picture":
                 if len(errors)>0:
@@ -115,30 +123,24 @@ async def validate_json(data: List[dict]):
                     all_errors.append(f"Invalid {errors_all} have been found in: {entry}")
                 continue
 
-            if not supervisor.validate_alignment(alignment=entry["alignment"]):
-                errors.append("alignment")
-
             if entry["category"] == "Table":
                 if len(errors)>0:
                     errors_all = ", ".join(errors)
                     all_errors.append(f"Invalid {errors_all} have been found in: {entry}")
                 continue
 
-            if not supervisor.validate_font_size(entry=entry):
-                errors.append("font size")
-            
-            if not supervisor.validate_font_style(font_style=entry["font_style"]):
-                errors.append("font style")
-
             if len(errors)>0:
                 errors_all = ", ".join(errors)
                 all_errors.append(f"Invalid {errors_all} have been found in: {entry}")
         
-        except Exception as e:
+        except Exception:
+            logger.exception(f"Validation failed on entry: {entry}")
             raise HTTPException(
                 status_code=500,
                 detail="Unknown error has occured while validating json."
             )
+
+    logger.info(f"Validated {len(data)} entries, found {len(all_errors)} errors.")
 
     return {
         "error_count": len(all_errors),
@@ -155,12 +157,18 @@ async def validate_json_dev(data: List[dict]):
             continue
 
         errors = supervisor.validate_table_style(table_content=entry["text"])
-        print(errors)
+        if len(errors)>0:
+            logger.info(f"Table style errors: {errors}")
 
     return {"status": "All OK"}
 
 
 
 if __name__ == "__main__":
+    logger.info("\n\n")
     import uvicorn
-    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("app:app", 
+                host="0.0.0.0", 
+                port=2828, 
+                reload=True
+            )

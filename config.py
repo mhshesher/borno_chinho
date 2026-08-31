@@ -1,25 +1,25 @@
+LOG_DIR = "logs"
+LOG_FILE = "app.log"
+LOG_LEVEL = "INFO"
+LOG_MAX_BYTES = 5 * 1024 * 1024
+LOG_BACKUP_COUNT = 3
+
+
 PICTURE_SCHEMA = [
     "bbox", 
-    "category", 
-    "page_alignment"
+    "category"
 ]
 
 TABLE_SCHEMA = [
     "bbox", 
     "category", 
-    "text", 
-    "page_alignment", 
-    "alignment"
+    "text"
 ]
 
 OVERALL_SCHEMA = [
     "bbox", 
     "category", 
-    "text", 
-    "font_size", 
-    "font_style", 
-    "page_alignment", 
-    "alignment"
+    "text"
 ]
 
 CATEGORIES = [
