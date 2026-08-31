@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BornoChinho</title>
+    <link rel="icon" type="image/png" href="/static/images/logo_icon_128.png">
+    <link rel="stylesheet" href="/static/style.css">
+    <!-- Apply the saved theme before first paint so there is no flash -->
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem('theme');
+                if (saved === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                }
+                // Restore the split before first paint so the panes do not jump
+                var w = parseFloat(localStorage.getItem('panelWidth'));
+                if (!isNaN(w)) {
+                    document.documentElement.style.setProperty('--panel-percent', w);
+                }
+            } catch (e) {
+                /* localStorage unavailable (private mode, blocked cookies) - stay on light */
+            }
+        })();
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <!-- Main Container -->
+    <div class="app-container">
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Toolbar -->
+            <header class="toolbar">
+                <div class="toolbar-left">
+                    <a class="brand" href="/" title="BornoChinho">
+                        <img class="brand-mark" src="/static/images/logo_icon.png" alt="">
+                        <span class="brand-text">
+                            <span class="brand-name">Borno<span class="brand-name-alt">Chinho</span></span>
+                            <span class="brand-tagline">Annotate. Preserve. Understand.</span>
+                        </span>
+                    </a>
+                </div>
+
+                <div class="toolbar-right">
+                    <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                    <button class="small-btn" id="uploadImageBtn" title="Upload a single image" onclick="document.getElementById('fileInput').click()">
+                        <i data-lucide="upload"></i>
+                        Image
+                    </button>
+                    <button class="small-btn" id="mountImagesBtn" title="Mount a folder of images" onclick="mountImageFolder()">
+                        <i data-lucide="folder-open"></i>
+                        Mount Images
+                    </button>
+                    <button class="small-btn" id="showBoxesBtn" title="Show bounding boxes from the loaded JSON"
+                            onclick="toggleBoundingBoxes()" aria-pressed="false">
+                        <i data-lucide="scan-search"></i>
+                        Show Boxes
+                    </button>
+                    <div class="divider"></div>
+                    <button class="icon-btn danger" id="clearBtn" onclick="clearRectangles()" disabled>
+                        <i data-lucide="trash-2"></i>
+                    </button>
+                    <div class="divider"></div>
+                    <button class="icon-btn" id="themeToggleBtn" title="Toggle theme" onclick="toggleTheme()">
+                        <i data-lucide="moon" class="theme-icon-light"></i>
+                        <i data-lucide="sun" class="theme-icon-dark"></i>
+                    </button>
+                    <button class="icon-btn" id="aboutBtn" title="About" onclick="openAbout()">
+                        <i data-lucide="info"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Canvas Area: the viewport stays put so the floating controls
+                 do not scroll away with a zoomed-in image. -->
+            <div class="canvas-viewport">
+                <div class="canvas-area">
+                    <div class="canvas-wrapper" id="canvasWrapper">
+                        <div class="placeholder" id="imagePlaceholder">
+                            <i data-lucide="image" style="width: 44px; height: 44px; stroke-width: 1.5;"></i>
+                            <p>Upload an image to start annotating</p>
+                            <span class="placeholder-hint">Drag a box on the image to create an annotation</span>
+                        </div>
+                        <canvas id="canvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- Floating zoom controls, pinned to the preview viewport -->
+                <div class="zoom-float" id="canvasZoomControls">
+                    <button class="icon-btn" id="zoomOutBtn" title="Zoom out" onclick="zoomOut()" disabled>
+                        <i data-lucide="zoom-out"></i>
+                    </button>
+                    <span class="zoom-display" id="zoomLevel">100%</span>
+                    <button class="icon-btn" id="zoomInBtn" title="Zoom in" onclick="zoomIn()" disabled>
+                        <i data-lucide="zoom-in"></i>
+                    </button>
+                    <div class="divider"></div>
+                    <button class="icon-btn" id="resetBtn" title="Fit to height" onclick="resetZoom()" disabled>
+                        <i data-lucide="rotate-ccw"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Image pager (visible once folders are mounted) -->
+            <nav class="pager" id="imagePager" style="display: none;">
+                <button class="icon-btn" id="imagePrevBtn" title="Previous image" onclick="stepImage(-1)">
+                    <i data-lucide="chevron-left"></i>
+                </button>
+                <span class="pager-label" id="imagePagerLabel">&ndash;</span>
+                <button class="icon-btn" id="imageNextBtn" title="Next image" onclick="stepImage(1)">
+                    <i data-lucide="chevron-right"></i>
+                </button>
+            </nav>
+
+        </main>
+
+        <!-- Drag handle between the preview and the annotation panel -->
+        <div class="split-resizer" id="splitResizer" role="separator"
+             aria-orientation="vertical" tabindex="0"
+             aria-label="Resize image preview and annotation panel"
+             title="Drag to resize (double-click to reset)"></div>
+
+        <!-- Right Sidebar - Annotations -->
+        <aside class="right-sidebar">
+            <!-- Coordinates Section -->
+            <section class="panel" id="coordinatePanel">
+                <header class="panel-toolbar">
+                    <div class="panel-toolbar-left">
+                        <h2 class="panel-title">Selected Rectangle</h2>
+                    </div>
+                    <div class="panel-toolbar-right">
+                        <button class="icon-btn" id="closeCoordinatesBtn" title="Close" onclick="closeCoordinatesPanel()">
+                            <i data-lucide="x"></i>
+                        </button>
+                    </div>
+                </header>
+                <div class="panel-body">
+                    <div class="coordinates-display" id="coordinatesDisplay">
+                        <div class="coord-empty">
+                            <p>No rectangle selected</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- JSON Editor -->
+            <section class="panel json-panel">
+                <!-- Mirrors the left toolbar so both headers align across the split -->
+                <header class="panel-toolbar">
+                    <div class="panel-toolbar-left">
+                        <h2 class="panel-title">JSON Editor</h2>
+                    </div>
+                    <div class="panel-toolbar-right">
+                        <input type="file" id="jsonFileInput" accept=".json" style="display: none;">
+                        <button class="icon-btn" id="jsonDirBtn" onclick="toggleJsonDirection()"
+                                title="Switch to right-to-left view" aria-pressed="false">
+                            <i data-lucide="pilcrow-left" class="dir-icon-ltr"></i>
+                            <i data-lucide="pilcrow-right" class="dir-icon-rtl"></i>
+                        </button>
+                        <div class="divider"></div>
+                        <button class="small-btn" title="Load a single JSON file" onclick="openJsonFile()">
+                            <i data-lucide="upload"></i>
+                            Load
+                        </button>
+                        <button class="small-btn" id="mountJsonBtn" title="Mount a folder of annotations" onclick="mountJsonFolder()">
+                            <i data-lucide="folder-open"></i>
+                            Mount JSON
+                        </button>
+                        <button class="small-btn primary" id="saveJsonBtn" onclick="saveJSON()">
+                            <i data-lucide="save"></i>
+                            Save
+                        </button>
+                    </div>
+                </header>
+
+                <div class="panel-body">
+                    <!-- Find and Replace -->
+                    <div class="find-replace-container" id="findReplaceContainer" style="display: none;">
+                        <div class="find-replace-row">
+                            <input type="text" id="findInput" placeholder="Find..." class="find-replace-input">
+                            <button class="find-replace-btn" onclick="findNext()" title="Find Next">
+                                <i data-lucide="arrow-down"></i>
+                            </button>
+                            <button class="find-replace-btn" onclick="findPrev()" title="Find Previous">
+                                <i data-lucide="arrow-up"></i>
+                            </button>
+                        </div>
+                        <div class="find-replace-row">
+                            <input type="text" id="replaceInput" placeholder="Replace..." class="find-replace-input">
+                            <button class="find-replace-btn" onclick="replaceOne()" title="Replace">
+                                <i data-lucide="replace"></i>
+                            </button>
+                            <button class="find-replace-btn" onclick="replaceAll()" title="Replace All">
+                                <i data-lucide="replace-all"></i>
+                            </button>
+                            <button class="find-replace-btn close-btn" onclick="closeFindReplace()" title="Close">
+                                <i data-lucide="x"></i>
+                            </button>
+                        </div>
+                        <div class="find-counter" id="findCounter"></div>
+                    </div>
+                
+                    <!-- Positioned wrapper so the zoom controls float over the editor -->
+                    <div class="json-editor-wrapper">
+                        <textarea id="jsonEditor" placeholder="JSON annotations will appear here..."></textarea>
+
+                        <!-- Floating zoom controls, pinned inside the editor -->
+                        <div class="zoom-float" id="jsonZoomControls">
+                            <button class="icon-btn" title="JSON Zoom Out" id="jsonZoomOutBtn" onclick="zoomJsonOut()">
+                                <i data-lucide="zoom-out"></i>
+                            </button>
+                            <span class="zoom-display" id="jsonZoomLevel">100%</span>
+                            <button class="icon-btn" title="JSON Zoom In" id="jsonZoomInBtn" onclick="zoomJsonIn()">
+                                <i data-lucide="zoom-in"></i>
+                            </button>
+                            <div class="divider"></div>
+                            <button class="icon-btn" title="Reset JSON Zoom" id="jsonResetBtn" onclick="resetJsonZoom()">
+                                <i data-lucide="rotate-ccw"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- JSON pager (visible once folders are mounted) -->
+                    <nav class="pager" id="jsonPager" style="display: none;">
+                        <button class="icon-btn" id="jsonPrevBtn" title="Previous annotation" onclick="stepJson(-1)">
+                            <i data-lucide="chevron-left"></i>
+                        </button>
+                        <span class="pager-label" id="jsonPagerLabel">&ndash;</span>
+                        <button class="icon-btn" id="jsonNextBtn" title="Next annotation" onclick="stepJson(1)">
+                            <i data-lucide="chevron-right"></i>
+                        </button>
+                        <button class="small-btn pager-sync" id="syncPagesBtn" title="Match the image page"
+                                onclick="syncPages()" style="display: none;">
+                            <i data-lucide="link"></i>
+                            Sync
+                        </button>
+                    </nav>
+
+                </div>
+            </section>
+        </aside>
+    </div>
+
+    <!-- Status footer -->
+    <footer class="app-footer">
+        <div class="footer-left">
+            <span class="footer-item" id="footerAnnotations">No annotations</span>
+            <div class="footer-sep"></div>
+            <span class="footer-item" id="footerImage">No image</span>
+            <div class="footer-sep"></div>
+            <span class="footer-item" id="footerBoxes">Boxes hidden</span>
+        </div>
+        <div class="footer-center">
+            <span class="footer-item footer-brand">BornoChinho</span>
+            <span class="footer-item footer-copyright">&copy; 2025&ndash;2026 Md. Mehedi Hasan</span>
+        </div>
+        <div class="footer-right">
+            <span class="footer-item" id="footerJsonStatus">JSON empty</span>
+        </div>
+    </footer>
+
+    <!-- About dialog -->
+    <div class="modal-overlay" id="aboutOverlay" style="display: none;" onclick="closeAboutBackdrop(event)">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+            <div class="modal-header">
+                <h2 class="modal-title" id="aboutTitle">About BornoChinho</h2>
+                <button class="icon-btn" title="Close" onclick="closeAbout()">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="about-intro">
+                    <img class="about-logo" src="/static/images/logo_transparent.png"
+                         alt="BornoChinho - Annotate. Preserve. Understand.">
+                    <p>Draw rectangles over an image to build structured annotations, then
+                       review and edit them as JSON side by side.</p>
+                </div>
+                <h3 class="about-subtitle">Shortcuts</h3>
+                <dl class="about-shortcuts">
+                    <dt><kbd>Ctrl</kbd> <kbd>H</kbd></dt>
+                    <dd>Find &amp; replace</dd>
+
+                    <dt><kbd>Ctrl</kbd> <kbd>+</kbd> / <kbd>-</kbd></dt>
+                    <dd>Zoom in or out</dd>
+
+                    <dt><kbd>Ctrl</kbd> <kbd>0</kbd></dt>
+                    <dd>Reset zoom</dd>
+
+                    <dt><kbd>Delete</kbd></dt>
+                    <dd>Remove selection</dd>
+                </dl>
+
+                <h3 class="about-subtitle">Resizing</h3>
+                <p class="about-note">Drag the divider between the panes to resize them.
+                   Double-click it to restore the default 60/40 split.</p>
+
+                <h3 class="about-subtitle">Designer &amp; developer</h3>
+                <div class="about-author">
+                    <div class="about-author-head">
+                        <span class="about-avatar" aria-hidden="true">MH</span>
+                        <div>
+                            <p class="about-author-name">Md. Mehedi Hasan</p>
+                            <p class="about-author-role">Machine learning engineer</p>
+                        </div>
+                    </div>
+                    <p class="about-note">A machine learning engineer with a passion for
+                       building tools that make everyday tasks simpler.</p>
+                    <div class="about-links">
+                        <a class="about-link" href="https://github.com/mhshesher"
+                           target="_blank" rel="noopener noreferrer" title="github.com/mhshesher">
+                            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38
+                                         0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13
+                                         -.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66
+                                         .07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15
+                                         -.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.42 7.42 0 0 1 2-.27c.68 0
+                                         1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82
+                                         1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01
+                                         1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+                            </svg>
+                            <span>GitHub</span>
+                        </a>
+                        <a class="about-link" href="https://www.linkedin.com/in/mehedi-shesher/"
+                           target="_blank" rel="noopener noreferrer" title="linkedin.com/in/mehedi-shesher">
+                            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                                <path d="M3.6 5.9H.9V15h2.7V5.9ZM2.25 1A1.6 1.6 0 1 0 2.24 4.2 1.6 1.6 0 0 0
+                                         2.25 1ZM15 9.8c0-2.6-1.4-3.9-3.3-3.9-1.5 0-2.2.85-2.6 1.44V5.9H6.4c.04.76
+                                         0 9.1 0 9.1h2.7V9.9c0-.24.02-.49.09-.66.2-.49.64-1 1.39-1 .98 0 1.37.75
+                                         1.37 1.84V15H15V9.8Z"/>
+                            </svg>
+                            <span>LinkedIn</span>
+                        </a>
+                        <a class="about-link" href="mailto:mehedi.shesher.1380@gmail.com"
+                           title="mehedi.shesher.1380@gmail.com">
+                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"
+                                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <rect x="1.4" y="3.2" width="13.2" height="9.6" rx="1.6"/>
+                                <path d="m1.8 4.4 5.35 3.72a1.5 1.5 0 0 0 1.7 0L14.2 4.4"/>
+                            </svg>
+                            <span>Email</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <span class="modal-copyright">&copy; 2025&ndash;2026 Md. Mehedi Hasan</span>
+                <button class="small-btn primary" onclick="closeAbout()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>
