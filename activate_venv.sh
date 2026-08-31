@@ -1,1 +1,0 @@
-source /home/mehedi-shesher/venvs/borno_chinho/bin/activate
